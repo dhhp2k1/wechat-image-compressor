@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>微信图片轻压缩</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <div class="brand">微信图片轻压缩</div>
+      <span class="local-pill"><span aria-hidden="true">●</span> 仅在本地处理</span>
+    </header>
+
+    <div class="workspace">
+    <section class="hero" aria-labelledby="title">
+      <p class="eyebrow">清楚一点，小一点</p>
+      <h1 id="title">把图片放进来，<br><span>其余交给我们。</span></h1>
+      <p class="intro">自动压到 80KB 以内，尽量保留小字、数字和线条的清晰度。</p>
+
+      <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="选择图片，或将图片拖入这里">
+        <div class="upload-icon" aria-hidden="true">
+          <svg viewBox="0 0 48 48" fill="none"><rect x="5" y="10" width="38" height="30" rx="7" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="20" r="3" fill="currentColor"/><path d="m9 35 10-9 7 6 6-6 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <p class="drop-title">拖入图片，或<span class="upload-link">点击选择</span></p>
+        <p class="drop-sub">选择后自动压缩，无需设置</p>
+        <p class="format-label">支持 JPG、PNG、WebP · 可一次选择多张</p>
+      </div>
+      <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden>
+      <div class="paste-box">
+        <label for="pasteTarget" class="paste-label">从剪贴板粘贴图片</label>
+        <div class="paste-input-row">
+          <textarea id="pasteTarget" class="paste-target" rows="1" placeholder="点这里，连续按 Ctrl + V" aria-describedby="pasteStatus" spellcheck="false"></textarea>
+          <button id="pasteStart" class="button button-dark" type="button" disabled>开始压缩 (0)</button>
+        </div>
+        <p id="pasteStatus" class="paste-status" role="status" aria-live="polite">粘贴的图片会先进入下方队列，点击按钮后统一压缩</p>
+      </div>
+      <div id="pasteQueuePanel" class="paste-queue-panel hidden">
+        <div class="paste-queue-heading"><strong>待压缩队列</strong><span id="pasteCount">0 张</span></div>
+        <div id="pasteQueueList" class="paste-queue-list"></div>
+      </div>
+      <p class="privacy"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2 3.5 4.7v4.8c0 4.1 2.6 6.9 6.5 8.5 3.9-1.6 6.5-4.4 6.5-8.5V4.7L10 2Z" stroke="currentColor" stroke-width="1.5"/><path d="m7 10 2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>图片不会上传，关闭页面后不会保留</p>
+    </section>
+
+    <section id="results" class="results hidden" aria-labelledby="results-title">
+      <div class="results-heading"><div><p class="eyebrow">已经为你处理</p><h2 id="results-title">压缩结果</h2></div><button id="downloadAll" class="button button-outline hidden" type="button">下载全部 80KB 版 ZIP</button></div>
+      <div id="resultList" class="result-list" aria-live="polite"></div>
+    </section>
+    </div>
+  </main>
+  <dialog id="previewDialog" class="preview-dialog" aria-labelledby="previewTitle">
+    <div class="preview-head"><div><p class="eyebrow">放大检查细节</p><h2 id="previewTitle">图片对比</h2></div><div class="preview-actions"><button id="previewZoom" class="button button-outline" type="button">适应窗口</button><button id="previewClose" class="button button-dark" type="button">关闭</button></div></div>
+    <p class="preview-hint">默认按原尺寸显示，可在图片内滚动查看。请重点比较小字、数字和细线。</p>
+    <div id="previewGrid" class="preview-grid">
+      <div class="preview-column"><h3>原图</h3><div class="preview-frame"><img id="previewOriginal" alt="原图预览"></div></div>
+      <div class="preview-column"><h3>80KB 版本</h3><div class="preview-frame"><img id="previewStandard" alt="80KB 版本预览"></div></div>
+      <div id="previewRelaxedColumn" class="preview-column hidden"><h3>更清晰版</h3><div class="preview-frame"><img id="previewRelaxed" alt="更清晰版本预览"></div></div>
+    </div>
+  </dialog>
+  <footer>微信图片轻压缩 v1.0 · 无需登录 · 图片不上传 · 联系：<a href="mailto:yiyud1218@qq.com">yiyud1218@qq.com</a></footer>
+  <script src="./app.js" defer></script>
+</body>
+</html>
