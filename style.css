@@ -56,3 +56,15 @@
 .shell.has-results .paste-queue-panel{max-width:none}
 @media(max-width:880px){.shell.has-results .paste-box,.shell.has-results .paste-queue-panel{max-width:640px}}
 footer a{color:#6d8b78;text-decoration:none}footer a:hover{text-decoration:underline}
+
+.preview-controls{margin:0 0 16px;padding:15px 17px;background:#f5faf6;border:1px solid #dcebe0;border-radius:12px}
+.preview-range-heading{display:flex;justify-content:space-between;align-items:baseline;gap:12px;color:#2c4d39;font-size:13px}
+.preview-range-heading strong{font-size:18px;color:#147d54;margin-left:6px}
+.preview-range-heading span{color:#638273;font-size:12px}
+#previewTarget{display:block;width:100%;margin:13px 0 4px;accent-color:#168a61;cursor:pointer}
+.preview-range-labels{display:flex;justify-content:space-between;color:#789184;font-size:11px}
+.preview-control-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:13px}
+#previewStatus{color:#5d7968;font-size:12px;line-height:1.5;flex:1;min-width:170px}
+.preview-control-actions .button{font-size:12px;padding:9px 12px}
+@media(max-width:700px){.preview-range-heading{align-items:start;flex-direction:column;gap:4px}.preview-control-actions .button{flex:1}}
+@media(min-width:701px){.preview-frame{height:min(52vh,600px)}}

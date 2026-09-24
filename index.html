@@ -18,7 +18,7 @@
     <section class="hero" aria-labelledby="title">
       <p class="eyebrow">清楚一点，小一点</p>
       <h1 id="title">把图片放进来，<br><span>其余交给我们。</span></h1>
-      <p class="intro">自动压到 80KB 以内，尽量保留小字、数字和线条的清晰度。</p>
+      <p class="intro">默认压到 75KB 以内，可在对比时调整为 65–85KB，尽量保留小字、数字和线条的清晰度。</p>
 
       <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="选择图片，或将图片拖入这里">
         <div class="upload-icon" aria-hidden="true">
@@ -45,7 +45,7 @@
     </section>
 
     <section id="results" class="results hidden" aria-labelledby="results-title">
-      <div class="results-heading"><div><p class="eyebrow">已经为你处理</p><h2 id="results-title">压缩结果</h2></div><button id="downloadAll" class="button button-outline hidden" type="button">下载全部 80KB 版 ZIP</button></div>
+      <div class="results-heading"><div><p class="eyebrow">已经为你处理</p><h2 id="results-title">压缩结果</h2></div><button id="downloadAll" class="button button-outline hidden" type="button">下载全部当前版本 ZIP</button></div>
       <div id="resultList" class="result-list" aria-live="polite"></div>
     </section>
     </div>
@@ -53,13 +53,19 @@
   <dialog id="previewDialog" class="preview-dialog" aria-labelledby="previewTitle">
     <div class="preview-head"><div><p class="eyebrow">放大检查细节</p><h2 id="previewTitle">图片对比</h2></div><div class="preview-actions"><button id="previewZoom" class="button button-outline" type="button">适应窗口</button><button id="previewClose" class="button button-dark" type="button">关闭</button></div></div>
     <p class="preview-hint">默认按原尺寸显示，可在图片内滚动查看。请重点比较小字、数字和细线。</p>
+    <div class="preview-controls">
+      <div class="preview-range-heading"><label for="previewTarget">当前版本上限 <strong id="previewTargetValue">75KB</strong></label><span id="previewActual">实际大小：—</span></div>
+      <input id="previewTarget" type="range" min="65" max="85" step="1" value="75" aria-describedby="previewRangeHint previewStatus">
+      <div id="previewRangeHint" class="preview-range-labels"><span>65KB · 更省空间</span><span>85KB · 更多细节</span></div>
+      <div class="preview-control-actions"><span id="previewStatus" role="status" aria-live="polite">拖动滑块后重新生成当前版本</span><button id="previewDownload" class="button button-dark" type="button">下载当前版</button><button id="previewHigh" class="button button-soft" type="button">生成 ≤150KB 版</button><button id="previewHighDownload" class="button button-outline hidden" type="button">下载 ≤150KB 版</button></div>
+    </div>
     <div id="previewGrid" class="preview-grid">
       <div class="preview-column"><h3>原图</h3><div class="preview-frame"><img id="previewOriginal" alt="原图预览"></div></div>
-      <div class="preview-column"><h3>80KB 版本</h3><div class="preview-frame"><img id="previewStandard" alt="80KB 版本预览"></div></div>
-      <div id="previewRelaxedColumn" class="preview-column hidden"><h3>更清晰版</h3><div class="preview-frame"><img id="previewRelaxed" alt="更清晰版本预览"></div></div>
+      <div class="preview-column"><h3 id="previewStandardTitle">当前版本 · ≤75KB</h3><div class="preview-frame"><img id="previewStandard" alt="当前版本预览"></div></div>
+      <div id="previewRelaxedColumn" class="preview-column hidden"><h3 id="previewRelaxedTitle">更清晰版 · ≤150KB</h3><div class="preview-frame"><img id="previewRelaxed" alt="更清晰版本预览"></div></div>
     </div>
   </dialog>
-  <footer>微信图片轻压缩 v1.0 · 无需登录 · 图片不上传 · 联系：<a href="mailto:yiyud1218@qq.com">yiyud1218@qq.com</a></footer>
+  <footer>微信图片轻压缩 v1.1 · 无需登录 · 图片不上传 · 联系：<a href="mailto:yiyud1218@qq.com">yiyud1218@qq.com</a></footer>
   <script src="./app.js" defer></script>
 </body>
 </html>

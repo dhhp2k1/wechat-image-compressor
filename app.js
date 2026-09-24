@@ -2,9 +2,9 @@
 (() => {
   'use strict';
 
-  const HARD_MAX = 80_000;
-  const TARGET_MIN = 74_000;
-  const TARGET_MAX = 79_000;
+  const DEFAULT_MAX = 75_000;
+  const SLIDER_MIN = 65;
+  const SLIDER_MAX = 85;
   const RELAXED_MAX = 150_000;
   const RELAXED_MIN = 100_000;
   const WIDTHS = [1600, 1536, 1440, 1360, 1280, 1200, 1120, 1080, 1024, 960];
@@ -22,7 +22,10 @@
   const queue = [];
   const pasteQueue = [];
   let working = false;
-  let previewUrls = [];
+  const previewUrls = { standard: null, relaxed: null };
+  let previewEntry = null;
+  let previewTimer = null;
+  let previewWorking = false;
   let latestPasteBatch = 0;
   let pasteItemNumber = 0;
 
@@ -145,6 +148,7 @@
     document.querySelector('.shell').classList.add('has-results');
     for (const file of accepted) {
       const entry = { file, blob: null, name: null, relaxedBlob: null, origin, pasteBatch,
+        targetKb: DEFAULT_MAX / 1000, variants: new Map(), relaxedQueued: false,
         failed: false, sourceUrl: URL.createObjectURL(file) };
       entries.push(entry);
       queue.push({ entry, mode: 'default' });
@@ -176,7 +180,7 @@
     const button = document.createElement('button');
     button.className = 'button button-dark';
     button.type = 'button';
-    button.textContent = '下载 80KB 版';
+    button.textContent = '下载 ≤75KB 版';
     button.disabled = true;
     button.addEventListener('click', () => download(entry.blob, entry.name));
     const previewButton = document.createElement('button');
@@ -193,12 +197,7 @@
     relaxedButton.className = 'button button-soft';
     relaxedButton.type = 'button';
     relaxedButton.textContent = '生成清晰版 · ≤150KB';
-    relaxedButton.addEventListener('click', () => {
-      relaxedButton.disabled = true;
-      relaxedButton.textContent = '等待处理…';
-      queue.push({ entry, mode: 'relaxed' });
-      processQueue();
-    });
+    relaxedButton.addEventListener('click', () => queueRelaxed(entry));
     qualityBox.append(qualityNote, relaxedButton);
     const relaxedPanel = document.createElement('div');
     relaxedPanel.className = 'relaxed-panel hidden';
@@ -233,34 +232,21 @@
         }
         setStatus(entry, '正在分析并压缩');
         await pause();
-        const result = await compress(entry.file);
-        entry.blob = result.blob;
-        entry.name = outputName(entry.file.name, result.blob.type);
-        entry.ui.meta.innerHTML = '';
-        const original = document.createElement('span');
-        original.textContent = `${result.originalWidth} × ${result.originalHeight} · ${formatSize(entry.file.size)}`;
-        const arrow = document.createElement('span');
-        arrow.className = 'arrow';
-        arrow.textContent = '→';
-        const final = document.createElement('span');
-        final.className = 'final';
-        final.textContent = `${result.width} × ${result.height} · ${formatSize(result.blob.size)}`;
-        entry.ui.meta.append(original, arrow, final);
-        entry.ui.button.disabled = false;
-        if (result.kept) entry.ui.button.textContent = '下载原图';
-        entry.ui.previewButton.classList.remove('hidden');
-        setStatus(entry, result.kept ? '原图已符合大小要求，保留原图' : '压缩完成', 'success');
-        entry.result = result;
-        if (result.qualityConcern) {
-          entry.ui.qualityNote.textContent = '图片细节可能受 80KB 限制影响';
-          entry.ui.qualityBox.classList.remove('hidden');
-        }
+        const result = await compress(entry.file, DEFAULT_MAX);
+        entry.variants.set(entry.targetKb, result);
+        applyStandardResult(entry, result, entry.targetKb);
       } catch (error) {
         console.error('图片处理失败：', error);
         if (mode === 'relaxed') {
           entry.ui.qualityNote.textContent = '更清晰版本生成失败，可重试。';
           entry.ui.relaxedButton.disabled = false;
           entry.ui.relaxedButton.textContent = '重试生成清晰版';
+          entry.relaxedQueued = false;
+          if (previewEntry === entry && previewDialog.open) {
+            $('previewHigh').disabled = false;
+            $('previewHigh').textContent = '重试生成 ≤150KB 版';
+            $('previewStatus').textContent = '150KB 版本生成失败，请重试';
+          }
         } else {
           entry.failed = true;
           setStatus(entry, `处理失败：${error.message || '请更换图片重试'}`, 'error');
@@ -270,6 +256,44 @@
       updateAllButton();
     }
     working = false;
+  }
+
+  function queueRelaxed(entry) {
+    if (entry.relaxedBlob || entry.relaxedQueued) return;
+    entry.relaxedQueued = true;
+    entry.ui.relaxedButton.disabled = true;
+    entry.ui.relaxedButton.textContent = '等待处理…';
+    if (previewEntry === entry && previewDialog.open) {
+      $('previewHigh').disabled = true;
+      $('previewHigh').textContent = '正在生成 ≤150KB 版…';
+      $('previewStatus').textContent = '正在生成 150KB 版本，当前版本仍可对比';
+    }
+    queue.push({ entry, mode: 'relaxed' });
+    processQueue();
+  }
+
+  function applyStandardResult(entry, result, targetKb) {
+    entry.result = result;
+    entry.blob = result.blob;
+    entry.targetKb = targetKb;
+    entry.name = outputName(entry.file.name, result.blob.type);
+    entry.ui.meta.innerHTML = '';
+    const original = document.createElement('span');
+    original.textContent = `${result.originalWidth} × ${result.originalHeight} · ${formatSize(entry.file.size)}`;
+    const arrow = document.createElement('span');
+    arrow.className = 'arrow';
+    arrow.textContent = '→';
+    const final = document.createElement('span');
+    final.className = 'final';
+    final.textContent = `${result.width} × ${result.height} · ${formatSize(result.blob.size)}`;
+    entry.ui.meta.append(original, arrow, final);
+    entry.ui.button.disabled = false;
+    entry.ui.button.textContent = result.kept ? '下载原图' : `下载 ≤${targetKb}KB 版`;
+    entry.ui.previewButton.classList.remove('hidden');
+    setStatus(entry, result.kept ? '原图已符合大小要求，保留原图' : '压缩完成', 'success');
+    entry.ui.qualityNote.textContent = `图片细节可能受 ${targetKb}KB 限制影响`;
+    entry.ui.qualityBox.classList.toggle('hidden', !result.qualityConcern || !!entry.relaxedBlob);
+    if (previewEntry === entry && previewDialog.open) renderPreviewStandard(entry);
   }
 
   function updatePasteProgress(entry) {
@@ -286,18 +310,16 @@
 
   async function processRelaxed(entry) {
     entry.ui.relaxedButton.textContent = '正在生成清晰版…';
-    const result = await compress(entry.file, true);
+    const result = await compress(entry.file, RELAXED_MAX);
     if (result.blob.size > RELAXED_MAX) throw new Error('更清晰版本超过 150KB');
-    if (!isClearer(result, entry.result)) {
-      entry.ui.qualityNote.textContent = '扩大到 150KB 后未发现明显改善，请放大对比当前结果。';
-      entry.ui.relaxedButton.classList.add('hidden');
-      return;
-    }
     entry.relaxedBlob = result.blob;
+    entry.relaxedResult = result;
     entry.relaxedName = outputName(entry.file.name, result.blob.type, 'clear');
     entry.ui.relaxedMeta.textContent = `更清晰版 · ${result.width} × ${result.height} · ${formatSize(result.blob.size)}`;
     entry.ui.relaxedPanel.classList.remove('hidden');
     entry.ui.qualityBox.classList.add('hidden');
+    entry.relaxedQueued = false;
+    if (previewEntry === entry && previewDialog.open) renderPreviewRelaxed(entry);
   }
 
   function isClearer(relaxed, standard) {
@@ -314,40 +336,132 @@
   }
 
   const previewDialog = $('previewDialog');
+  const previewTarget = $('previewTarget');
   $('previewClose').addEventListener('click', () => previewDialog.close());
   $('previewZoom').addEventListener('click', () => {
     const zoomed = previewDialog.classList.toggle('zoomed');
     $('previewZoom').textContent = zoomed ? '适应窗口' : '按原尺寸查看';
   });
+  previewTarget.addEventListener('input', () => {
+    if (!previewEntry) return;
+    const targetKb = Number(previewTarget.value);
+    if (!Number.isInteger(targetKb) || targetKb < SLIDER_MIN || targetKb > SLIDER_MAX) return;
+    $('previewTargetValue').textContent = `${targetKb}KB`;
+    if (targetKb === previewEntry.targetKb) {
+      clearTimeout(previewTimer);
+      $('previewDownload').disabled = false;
+      $('previewStatus').textContent = '当前版本已生成，可直接对比和下载';
+      return;
+    }
+    $('previewDownload').disabled = true;
+    $('previewStatus').textContent = `准备生成 ≤${targetKb}KB 版本…`;
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(processPreviewTarget, 180);
+  });
+  $('previewDownload').addEventListener('click', () => {
+    if (previewEntry) download(previewEntry.blob, previewEntry.name);
+  });
+  $('previewHigh').addEventListener('click', () => {
+    if (previewEntry) queueRelaxed(previewEntry);
+  });
+  $('previewHighDownload').addEventListener('click', () => {
+    if (previewEntry) download(previewEntry.relaxedBlob, previewEntry.relaxedName);
+  });
   previewDialog.addEventListener('close', () => {
+    previewEntry = null;
+    clearTimeout(previewTimer);
     $('previewStandard').removeAttribute('src');
     $('previewRelaxed').removeAttribute('src');
-    for (const url of previewUrls) URL.revokeObjectURL(url);
-    previewUrls = [];
+    for (const key of ['standard', 'relaxed']) {
+      if (previewUrls[key]) URL.revokeObjectURL(previewUrls[key]);
+      previewUrls[key] = null;
+    }
   });
 
   function showPreview(entry) {
     if (!entry.blob) return;
+    previewEntry = entry;
+    clearTimeout(previewTimer);
     previewDialog.classList.add('zoomed');
     $('previewZoom').textContent = '适应窗口';
     $('previewTitle').textContent = entry.file.name || '粘贴的图片';
     $('previewOriginal').src = entry.sourceUrl;
-    const standardUrl = URL.createObjectURL(entry.blob);
-    previewUrls.push(standardUrl);
-    $('previewStandard').src = standardUrl;
-    $('previewRelaxedColumn').classList.toggle('hidden', !entry.relaxedBlob);
-    if (entry.relaxedBlob) {
-      const relaxedUrl = URL.createObjectURL(entry.relaxedBlob);
-      previewUrls.push(relaxedUrl);
-      $('previewRelaxed').src = relaxedUrl;
-    }
+    previewTarget.value = String(entry.targetKb);
+    renderPreviewStandard(entry);
+    renderPreviewRelaxed(entry);
     previewDialog.showModal();
   }
 
-  async function compress(file, relaxed = false) {
-    const limit = relaxed ? RELAXED_MAX : HARD_MAX;
-    const targetMin = relaxed ? RELAXED_MIN : TARGET_MIN;
-    const targetMax = relaxed ? RELAXED_MAX - 1_000 : TARGET_MAX;
+  function setPreviewImage(key, blob) {
+    const image = $(key === 'standard' ? 'previewStandard' : 'previewRelaxed');
+    if (previewUrls[key]) URL.revokeObjectURL(previewUrls[key]);
+    previewUrls[key] = URL.createObjectURL(blob);
+    image.src = previewUrls[key];
+  }
+
+  function renderPreviewStandard(entry) {
+    $('previewTargetValue').textContent = `${entry.targetKb}KB`;
+    $('previewActual').textContent = `实际大小：${formatSize(entry.blob.size)}`;
+    $('previewStandardTitle').textContent = `当前版本 · ≤${entry.targetKb}KB · ${formatSize(entry.blob.size)}`;
+    $('previewDownload').disabled = false;
+    $('previewStatus').textContent = entry.result.kept ? '原图已小于所选上限，直接保留原图' : '已更新当前版本，可直接对比和下载';
+    setPreviewImage('standard', entry.blob);
+  }
+
+  function renderPreviewRelaxed(entry) {
+    $('previewRelaxedColumn').classList.toggle('hidden', !entry.relaxedBlob);
+    $('previewHighDownload').classList.toggle('hidden', !entry.relaxedBlob);
+    $('previewHigh').disabled = !!entry.relaxedBlob || entry.relaxedQueued;
+    $('previewHigh').textContent = entry.relaxedBlob ? '已生成 ≤150KB 版'
+      : entry.relaxedQueued ? '正在生成 ≤150KB 版…' : '生成 ≤150KB 版';
+    if (!entry.relaxedBlob) return;
+    $('previewRelaxedTitle').textContent = `更清晰版 · ≤150KB · ${formatSize(entry.relaxedBlob.size)}`;
+    setPreviewImage('relaxed', entry.relaxedBlob);
+    $('previewStatus').textContent = isClearer(entry.relaxedResult, entry.result)
+      ? '150KB 版本已生成，可在右侧对比和下载'
+      : '150KB 版本已生成；指标提升不明显，请放大检查细节';
+  }
+
+  async function processPreviewTarget() {
+    if (!previewEntry || !previewDialog.open || previewWorking) return;
+    const entry = previewEntry;
+    const targetKb = Number(previewTarget.value);
+    if (targetKb === entry.targetKb) return;
+    const cached = entry.variants.get(targetKb);
+    if (cached) {
+      applyStandardResult(entry, cached, targetKb);
+      return;
+    }
+    previewWorking = true;
+    $('previewStatus').textContent = `正在生成 ≤${targetKb}KB 版本…`;
+    try {
+      const result = await compress(entry.file, targetKb * 1000);
+      if (result.blob.size > targetKb * 1000) throw new Error('输出超过所选上限');
+      entry.variants.set(targetKb, result);
+      if (previewEntry === entry && previewDialog.open && Number(previewTarget.value) === targetKb) {
+        applyStandardResult(entry, result, targetKb);
+      }
+    } catch (error) {
+      console.error('调整压缩大小失败：', error);
+      if (previewEntry === entry && previewDialog.open && Number(previewTarget.value) === targetKb) {
+        previewTarget.value = String(entry.targetKb);
+        $('previewTargetValue').textContent = `${entry.targetKb}KB`;
+        $('previewDownload').disabled = false;
+        $('previewStatus').textContent = `无法生成 ${targetKb}KB 版本：${error.message || '请重试'}`;
+      }
+    } finally {
+      previewWorking = false;
+      if (previewEntry && previewDialog.open && Number(previewTarget.value) !== previewEntry.targetKb) {
+        clearTimeout(previewTimer);
+        previewTimer = setTimeout(processPreviewTarget, 0);
+      }
+    }
+  }
+
+  async function compress(file, limit = DEFAULT_MAX) {
+    const relaxed = limit > SLIDER_MAX * 1000;
+    const targetMin = relaxed ? RELAXED_MIN : Math.max(0, limit - 5_000);
+    const targetMax = relaxed ? limit - 1_000 : limit;
     const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
     try {
       const originalWidth = bitmap.width;
@@ -435,7 +549,7 @@
   }
 
   function needsQualityOption(result, category, baseWidth, originalWidth, minQuality) {
-    // At 80KB, tiny text is worth offering an escape hatch even when a small preview looks fine.
+    // Small text can need the 150KB option even when a small preview looks fine.
     return category === 'TEXT_HEAVY' ||
       result.metrics.ssim < .965 ||
       (category === 'GRAPHIC' && result.metrics.detailEdgeRetention < .90) ||
@@ -473,7 +587,7 @@
     }, 'image/jpeg', quality / 100));
   }
 
-  async function bestJpegWithin(canvas, low, high, limit = HARD_MAX) {
+  async function bestJpegWithin(canvas, low, high, limit = DEFAULT_MAX) {
     let best = null;
     let lo = low;
     let hi = high;
@@ -690,7 +804,7 @@
       alert('打包失败，请逐张下载。');
     } finally {
       button.disabled = false;
-      button.textContent = '下载全部 80KB 版 ZIP';
+      button.textContent = '下载全部当前版本 ZIP';
     }
   });
 
