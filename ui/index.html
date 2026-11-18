@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>微信图片轻压缩</title>
+  <link rel="stylesheet" href="app.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <h1><span class="app-icon" aria-hidden="true"></span>微信图片轻压缩</h1>
+      <div class="actions">
+        <button id="updates" class="button" type="button">检查更新</button>
+        <button id="quit" class="icon-button" type="button" title="退出" aria-label="退出" hidden>×</button>
+      </div>
+    </div>
+  </header>
+  <main class="workspace">
+    <section class="input-panel" aria-label="添加图片">
+      <button id="dropzone" class="dropzone" type="button">
+        <span class="plus" aria-hidden="true"></span>
+        拖入或选择图片
+      </button>
+      <input id="files" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple hidden>
+      <button id="paste" class="button paste" type="button" title="Ctrl+V">粘贴图片</button>
+      <section id="queue" class="queue" aria-labelledby="queue-title" hidden>
+        <div class="section-head">
+          <h2 id="queue-title">待压缩</h2>
+          <button id="start" class="button primary" type="button">开始压缩</button>
+        </div>
+        <ul id="pending" class="pending-list"></ul>
+      </section>
+      <p id="input-error" role="status" class="error" hidden></p>
+    </section>
+    <section class="results" aria-labelledby="results-title">
+      <div class="section-head results-head">
+        <h2 id="results-title">压缩结果</h2>
+        <button id="zip" class="button" type="button" hidden>保存 ZIP</button>
+      </div>
+      <p id="zip-error" role="status" class="error" hidden></p>
+      <ul id="results" class="results-list" aria-live="polite"></ul>
+    </section>
+  </main>
+
+  <dialog id="compare" class="compare" aria-labelledby="compare-title">
+    <header class="dialog-head">
+      <h2 id="compare-title"></h2>
+      <div class="actions">
+        <button id="zoom" class="button" type="button">适应窗口</button>
+        <button class="icon-button" type="button" data-close title="关闭" aria-label="关闭">×</button>
+      </div>
+    </header>
+    <div class="compare-actions">
+      <div class="range">
+        <label for="target">上限 <output id="target-value" for="target"></output></label>
+        <input id="target" type="range" min="65" max="85" step="1" value="75">
+      </div>
+      <div class="actions">
+        <button id="save-current" class="button primary" type="button">保存当前版</button>
+        <button id="high" class="button" type="button">生成 150 KB 版</button>
+      </div>
+      <p id="compare-error" role="status" class="error" hidden></p>
+    </div>
+    <div id="compare-grid" class="compare-grid">
+      <figure>
+        <figcaption><span>原图</span><span id="original-size"></span></figcaption>
+        <div class="frame" tabindex="0"><img id="original-img" alt="原图" draggable="false"></div>
+      </figure>
+      <figure>
+        <figcaption><span>当前版</span><span id="current-size"></span></figcaption>
+        <div class="frame" tabindex="0"><img id="current-img" alt="当前压缩版" draggable="false"></div>
+      </figure>
+      <figure id="high-column" hidden>
+        <figcaption><span>150 KB 版</span><span id="high-size"></span></figcaption>
+        <div class="frame" tabindex="0"><img id="high-img" alt="150 KB 压缩版" draggable="false"></div>
+      </figure>
+    </div>
+  </dialog>
+
+  <dialog id="update-dialog" class="modal" aria-labelledby="update-title">
+    <header class="dialog-head">
+      <h2 id="update-title">检查更新</h2>
+      <button class="icon-button" type="button" data-close title="关闭" aria-label="关闭">×</button>
+    </header>
+    <div class="modal-body">
+      <p id="update-status" role="status"></p>
+      <div class="actions modal-actions">
+        <button id="update-retry" class="button" type="button" hidden>重试</button>
+        <button id="install" class="button primary" type="button" hidden>下载并重启</button>
+      </div>
+    </div>
+  </dialog>
+  <dialog id="exit-dialog" class="modal" aria-labelledby="exit-title">
+    <header class="dialog-head">
+      <h2 id="exit-title">退出应用？</h2>
+      <button class="icon-button" type="button" data-close title="关闭" aria-label="关闭">×</button>
+    </header>
+    <div class="modal-body">
+      <p>本次队列和压缩结果会清空。</p>
+      <div class="actions modal-actions">
+        <button class="button" type="button" data-close>取消</button>
+        <button id="confirm-quit" class="button primary" type="button">退出</button>
+      </div>
+    </div>
+  </dialog>
+</body>
+</html>

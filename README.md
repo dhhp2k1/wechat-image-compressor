@@ -1,24 +1,49 @@
 # 微信图片轻压缩
 
-一个无需安装的本地图片压缩工具。图片在浏览器内处理，不上传服务器。
+[下载 Windows 便携版](https://github.com/dhhp2k1/wechat-image-compressor/releases/latest/download/WeChatImageCompressor-windows-amd64.exe)
 
-## 主要功能
+在 Windows 10/11 x64 上双击 EXE。程序用 Edge 应用窗口显示界面，图片由 Go 在本机压缩。图片处理可以离线使用。
 
-- 拖入、选择或粘贴 JPG、PNG、WebP 图片，支持一次处理多张。
-- 粘贴图片先加入队列，确认后再批量压缩。
-- 默认生成不超过 75KB 的版本；在预览对比中，可用滑块把上限调整为 65–85KB，并立即查看新结果。
-- 预览中还可生成不超过 150KB 的版本，和原图、当前版本并排比较。
-- 原尺寸放大对比原图和压缩结果，单张下载或将各图片的当前版本打包为 ZIP。
-- 桌面端输入区与结果区并排显示。
+- 拖入或选择 JPG、PNG、WebP 即开始压缩。粘贴可以连续入队，再统一压缩。
+- 默认上限为 75 KB。打开对比可以将上限调至 65–85 KB，或单独生成 150 KB 版。
+- 对比窗口按原图比例联动滚动，也可切换适应窗口。支持保存单张或打包当前版本为 ZIP。
+- 体积按十进制计算。原图符合上限时保留其格式和原始字节，其他输出为 JPEG，透明区域合成白底。压缩动画 WebP 时输出首帧。
 
-## 使用
+## 更新
 
-最方便的方式是下载 [`WeChatImageCompressor_portable.html`](./WeChatImageCompressor_portable.html)，双击即可在浏览器打开，无需其他文件。
+应用启动后后台检查，右上角也可以手动检查。新版发布到 GitHub Release 后，选“下载并重启”即可替换当前 EXE。请把 EXE 放在你有写权限的文件夹。
 
-也可以下载整个项目，双击 `index.html`。此时 `index.html`、`style.css` 和 `app.js` 需要放在同一文件夹。
+GitHub 和备用镜像采用同一份发布清单。程序使用内置 Ed25519 公钥验证清单，并检查 EXE 的 SHA-256 和字节数。镜像也可以指向自己的 HTTPS 地址。若设置 Windows 用户环境变量 `WECHAT_UPDATE_MIRROR`，其目录结构为：
 
-更多操作说明见 [使用说明](./使用说明.md)。
+```text
+<HTTPS 基址>/latest/download/update-windows-amd64.json
+<HTTPS 基址>/download/<版本>/WeChatImageCompressor-windows-amd64.exe
+```
 
-## 隐私与限制
+同步到自有镜像时先上传版本化 EXE，再覆盖最新清单。
 
-图片只在当前浏览器页面处理，关闭页面后不会保留。网页没有外部脚本、账号或上传接口。画质判断基于图像结构、边缘和局部细节的估计；小字、表格与重要数字仍建议人工检查。
+## 构建与发布
+
+使用 Go 1.26，在 Windows x64 的 PowerShell 中运行：
+
+```powershell
+$env:CGO_ENABLED = '0'
+go test ./...
+go build -trimpath -ldflags '-s -w -H windowsgui' -o WeChatImageCompressor-windows-amd64.exe .
+```
+
+仓库中的 `update-key.pub` 是更新签名公钥。发布私钥保存在仓库之外，`WIC_UPDATE_KEY_FILE` 指向本地私钥文件。推送标签后，GitHub Actions 会独立测试和构建 Windows EXE。发布时在本机签名，再上传 EXE 和清单。
+
+```powershell
+$version = 'v2.0.1'
+./scripts/build-release.ps1 $version
+git tag $version
+git push origin "refs/tags/$version"
+gh release create $version dist/WeChatImageCompressor-windows-amd64.exe dist/update-windows-amd64.json --verify-tag --latest --generate-notes
+```
+
+使用已推送到仓库的干净提交构建并打标签。发布需要 GitHub CLI 登录本仓库。默认构建版本为 v2.0.0，发布脚本会注入指定版本。
+
+## 浏览器版 v1.1
+
+见 [v1.1 便携版](./WeChatImageCompressor_portable.html) 和 [v1.1 使用说明](./使用说明.md)。

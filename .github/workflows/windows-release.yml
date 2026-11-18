@@ -1,0 +1,42 @@
+name: Windows build
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      CGO_ENABLED: '0'
+      GOARCH: amd64
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.26.11'
+      - name: Test and build
+        shell: pwsh
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          if ($tag -cnotmatch '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
+            throw 'Expected a stable vX.Y.Z tag'
+          }
+          go mod verify
+          go test ./...
+          go build -buildvcs=false -trimpath -ldflags "-s -w -H windowsgui -X main.version=$tag" -o dist/WeChatImageCompressor-windows-amd64.exe .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-amd64
+          path: dist/WeChatImageCompressor-windows-amd64.exe
+          if-no-files-found: error
