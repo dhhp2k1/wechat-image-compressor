@@ -10,20 +10,15 @@
   <script src="app.js" defer></script>
 </head>
 <body data-target-kb="{{.TargetKB}}" data-fit-preview="{{.FitPreview}}" data-check-on-start="{{.CheckOnStart}}">
-  <header class="masthead">
-    <div class="masthead-inner">
-      <h1><img class="app-icon" src="logo.png" alt="" width="34" height="34">微信图片轻压缩</h1>
-      <details id="app-menu" class="app-menu">
-        <summary class="menu-trigger" title="更多" aria-label="更多">···</summary>
-        <div class="menu-items">
-          <button id="settings" class="menu-action" type="button">设置</button>
-          <button id="updates" class="menu-action" type="button">检查更新</button>
-          <button id="quit" class="menu-action" type="button" hidden>退出</button>
-        </div>
-      </details>
-    </div>
-  </header>
   <main id="workspace" class="workspace">
+    <details id="app-menu" class="app-menu">
+      <summary class="menu-trigger" title="更多" aria-label="更多">···</summary>
+      <div class="menu-items">
+        <button id="settings" class="menu-action" type="button">设置</button>
+        <button id="updates" class="menu-action" type="button">检查更新</button>
+        <button id="quit" class="menu-action" type="button" hidden>退出</button>
+      </div>
+    </details>
     <section class="input-panel" aria-label="添加图片">
       <button id="dropzone" class="dropzone" type="button">
         <span class="plus" aria-hidden="true"></span>

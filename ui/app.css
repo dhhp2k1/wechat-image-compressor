@@ -15,24 +15,11 @@ button, input, select { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: default; opacity: .55; }
 :focus-visible { outline: 2px solid #2c7553; outline-offset: 3px; }
-h1, h2, p, figure, ul { margin: 0; }
+h2, p, figure, ul { margin: 0; }
 ul { list-style: none; padding: 0; }
 
-.masthead { border-bottom: 1px solid var(--line); background: #fff; }
-.masthead-inner {
-  max-width: 1360px;
-  margin: 0 auto;
-  padding: 0 28px;
-  min-height: 68px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-h1 { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; }
 h2 { font-size: 16px; font-weight: 700; }
-.app-icon { display: block; flex: none; }
-.app-menu { position: relative; }
+.app-menu { position: absolute; top: 9px; right: var(--workspace-gutter); z-index: 2; }
 .menu-trigger {
   position: relative;
   display: grid;
@@ -102,18 +89,22 @@ h2 { font-size: 16px; font-weight: 700; }
 .icon-button { width: 34px; padding: 0; line-height: 1; font: 23px/1 "Segoe UI", sans-serif; }
 
 .workspace {
+  --workspace-gutter: 28px;
+  position: relative;
   display: grid;
   grid-template-columns: minmax(245px, 1fr) minmax(0, 2.22fr);
   align-items: start;
   gap: 18px;
   max-width: 1360px;
   margin: auto;
-  padding: 24px 28px;
+  padding: 52px var(--workspace-gutter) 24px;
 }
 .workspace:not(.has-results) {
   grid-template-columns: minmax(0, 426px);
   justify-content: center;
-  padding-top: clamp(26px, 8vh, 52px);
+  align-content: center;
+  min-height: 100dvh;
+  padding-bottom: 42px;
 }
 .input-panel, .results { border: 1px solid var(--line); border-radius: 13px; background: #fff; }
 .input-panel { padding: 16px; }
@@ -202,8 +193,7 @@ figcaption span + span { color: var(--muted); font-size: 12px; white-space: nowr
 .compare-grid.fit .frame { display: grid; place-items: center; overflow: hidden; }
 
 @media (max-width: 850px) {
-  .masthead-inner, .workspace { padding-left: 16px; padding-right: 16px; }
-  .workspace { grid-template-columns: minmax(180px, 1fr) minmax(0, 2.15fr); gap: 12px; }
+  .workspace { --workspace-gutter: 16px; grid-template-columns: minmax(180px, 1fr) minmax(0, 2.15fr); gap: 12px; }
   .input-panel, .results { padding-left: 11px; padding-right: 11px; }
   .result-row { grid-template-columns: 42px minmax(0, 1fr) auto; gap: 7px; }
   .thumb { width: 42px; height: 42px; }
@@ -212,9 +202,7 @@ figcaption span + span { color: var(--muted); font-size: 12px; white-space: nowr
 }
 
 @media (max-width: 620px) {
-  h1 { font-size: 16px; gap: 7px; }
-  .masthead-inner, .workspace { padding-left: 10px; padding-right: 10px; }
-  .workspace { grid-template-columns: minmax(0, 1fr); padding-top: 12px; }
+  .workspace { --workspace-gutter: 10px; grid-template-columns: minmax(0, 1fr); }
   .dropzone { min-height: 105px; }
   .results-list { max-height: none; }
   .compare { width: calc(100vw - 12px); height: calc(100dvh - 12px); max-width: none; max-height: none; }
