@@ -1,13 +1,20 @@
 const $ = id => document.getElementById(id);
 const session = location.pathname.split('/')[1];
+let preferences = {
+  targetKB: Number(document.body.dataset.targetKb),
+  fitPreview: document.body.dataset.fitPreview === 'true',
+  checkOnStart: document.body.dataset.checkOnStart === 'true',
+};
 const pending = [];
 const entries = [];
 let processing = false;
 let pasteNumber = 0;
 
 async function request(endpoint, body, signal) {
+  const headers = {'X-WeChat-Session': session};
+  if (typeof body === 'string') headers['Content-Type'] = 'application/json';
   const res = await fetch(new URL('api/' + endpoint, location.href), {
-    method: 'POST', headers: {'X-WeChat-Session': session}, body, signal,
+    method: 'POST', headers, body, signal,
   });
   if (!res.ok) throw new Error((await res.text()).trim() || '操作失败');
   return res;
@@ -98,7 +105,7 @@ function renderPending() {
 }
 
 function addEntry(file) {
-  const entry = {file, url: URL.createObjectURL(file), cache: new Map(), target: 75, state: 'waiting'};
+  const entry = {file, url: URL.createObjectURL(file), cache: new Map(), target: preferences.targetKB, state: 'waiting'};
   const row = node('li', 'result-row');
   const img = node('img', 'thumb');
   img.alt = '';
@@ -281,7 +288,7 @@ function showBlob(img, blob) {
 
 function openPreview(entry) {
   preview = entry;
-  fit = false;
+  fit = preferences.fitPreview;
   offsets = [0, 0];
   $('compare-title').textContent = entry.file.name;
   $('compare-title').title = entry.file.name;
@@ -291,7 +298,7 @@ function openPreview(entry) {
   $('original-img').src = entry.url;
   $('save-current').disabled = false;
   $('high').disabled = false;
-  $('zoom').textContent = '适应窗口';
+  $('zoom').textContent = fit ? '原尺寸' : '适应窗口';
   error('compare-error');
   compare.showModal();
   renderPreview();
@@ -418,9 +425,45 @@ compare.addEventListener('close', () => {
 
 const updateDialog = $('update-dialog');
 const appMenu = $('app-menu');
+const settingsDialog = $('settings-dialog');
 let check;
 let available;
 let installing = false;
+
+$('settings').addEventListener('click', () => {
+  appMenu.open = false;
+  $('default-target').value = preferences.targetKB;
+  $('default-target-value').value = choice(preferences.targetKB);
+  $('default-preview').value = preferences.fitPreview ? 'fit' : 'original';
+  $('check-on-start').checked = preferences.checkOnStart;
+  error('settings-error');
+  settingsDialog.showModal();
+});
+$('default-target').addEventListener('input', () => {
+  $('default-target-value').value = choice($('default-target').value);
+});
+$('settings-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const saveButton = $('save-settings');
+  if (saveButton.disabled) return;
+  saveButton.disabled = true;
+  error('settings-error');
+  const next = {
+    targetKB: Number($('default-target').value),
+    fitPreview: $('default-preview').value === 'fit',
+    checkOnStart: $('check-on-start').checked,
+  };
+  try {
+    await request('settings', JSON.stringify(next));
+    preferences = next;
+    settingsDialog.close();
+  } catch (err) {
+    error('settings-error', err.message);
+  } finally {
+    saveButton.disabled = false;
+  }
+});
+settingsDialog.addEventListener('close', () => appMenu.querySelector('summary').focus());
 
 function updateMessage(message, {install = false, retry = false} = {}) {
   $('update-status').textContent = message;
@@ -505,4 +548,4 @@ $('quit').addEventListener('click', () => {
 });
 $('confirm-quit').addEventListener('click', quit);
 $('quit').hidden = !new URLSearchParams(location.search).has('tab');
-checkUpdate(false);
+if (preferences.checkOnStart) checkUpdate(false);

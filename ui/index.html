@@ -9,13 +9,14 @@
   <link rel="stylesheet" href="app.css">
   <script src="app.js" defer></script>
 </head>
-<body>
+<body data-target-kb="{{.TargetKB}}" data-fit-preview="{{.FitPreview}}" data-check-on-start="{{.CheckOnStart}}">
   <header class="masthead">
     <div class="masthead-inner">
       <h1><img class="app-icon" src="logo.png" alt="" width="34" height="34">微信图片轻压缩</h1>
       <details id="app-menu" class="app-menu">
         <summary class="menu-trigger" title="更多" aria-label="更多">···</summary>
         <div class="menu-items">
+          <button id="settings" class="menu-action" type="button">设置</button>
           <button id="updates" class="menu-action" type="button">检查更新</button>
           <button id="quit" class="menu-action" type="button" hidden>退出</button>
         </div>
@@ -82,6 +83,37 @@
         <div class="frame" tabindex="0"><img id="high-img" alt="150 KB 压缩版" draggable="false"></div>
       </figure>
     </div>
+  </dialog>
+
+  <dialog id="settings-dialog" class="modal" aria-labelledby="settings-title">
+    <header class="dialog-head">
+      <h2 id="settings-title">设置</h2>
+      <button class="icon-button" type="button" data-close title="关闭" aria-label="关闭">×</button>
+    </header>
+    <form id="settings-form" class="modal-body">
+      <div class="setting-row">
+        <label for="default-target">默认压缩上限</label>
+        <div class="setting-range">
+          <input id="default-target" type="range" min="65" max="85" step="1">
+          <output id="default-target-value" for="default-target"></output>
+        </div>
+      </div>
+      <div class="setting-row">
+        <label for="default-preview">对比打开方式</label>
+        <select id="default-preview">
+          <option value="original">原尺寸</option>
+          <option value="fit">适应窗口</option>
+        </select>
+      </div>
+      <label class="setting-row" for="check-on-start">
+        启动时检查更新
+        <input id="check-on-start" type="checkbox">
+      </label>
+      <p id="settings-error" role="status" class="error" hidden></p>
+      <div class="actions modal-actions">
+        <button id="save-settings" class="button primary" type="submit">保存</button>
+      </div>
+    </form>
   </dialog>
 
   <dialog id="update-dialog" class="modal" aria-labelledby="update-title">

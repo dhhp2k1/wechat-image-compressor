@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"net/http"
 	"os"
@@ -23,27 +24,30 @@ import (
 //go:embed ui/index.html ui/app.css ui/app.js ui/logo.png
 var interfaceFiles embed.FS
 
-var version = "v2.0.1"
+var version = "v2.0.2"
+var indexPage = template.Must(template.ParseFS(interfaceFiles, "ui/index.html"))
 
 //go:embed update-key.pub
 var updatePublicKey string
 
 type app struct {
-	host       string
-	token      string
-	quit       func()
-	compressor chan struct{}
-	client     *http.Client
-	sources    []update.Source
-	current    update.Candidate
-	updating   bool
-	mu         sync.Mutex
+	host            string
+	token           string
+	quit            func()
+	compressor      chan struct{}
+	client          *http.Client
+	sources         []update.Source
+	current         update.Candidate
+	updating        bool
+	mu              sync.Mutex
+	preferencesFile string
 }
 
 func newApp(host, token string, quit func()) *app {
 	return &app{
 		host: host, token: token, quit: quit, compressor: make(chan struct{}, 1),
 		client: update.HTTPClient(), sources: update.Sources(os.Getenv("WECHAT_UPDATE_MIRROR")),
+		preferencesFile: preferencesPath(),
 	}
 }
 
@@ -72,6 +76,8 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			a.checkUpdate(w, r)
 		case "api/install":
 			a.install(w, r)
+		case "api/settings":
+			a.savePreferences(w, r)
 		case "api/quit":
 			w.WriteHeader(http.StatusNoContent)
 			a.quit()
@@ -87,7 +93,9 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var name, contentType string
 	switch route {
 	case "":
-		name, contentType = "index.html", "text/html; charset=utf-8"
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		indexPage.ExecuteTemplate(w, "index.html", readPreferences(a.preferencesFile))
+		return
 	case "app.css":
 		name, contentType = route, "text/css; charset=utf-8"
 	case "app.js":
@@ -109,7 +117,7 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (a *app) compress(w http.ResponseWriter, r *http.Request) {
 	target, err := strconv.Atoi(r.URL.Query().Get("kb"))
-	if err != nil || !((target >= 65 && target <= 85) || target == 150) {
+	if err != nil || !((target >= minTargetKB && target <= maxTargetKB) || target == 150) {
 		http.Error(w, "不支持此压缩档位", http.StatusBadRequest)
 		return
 	}
