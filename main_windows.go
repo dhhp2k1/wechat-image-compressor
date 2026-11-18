@@ -115,7 +115,7 @@ func openWindow(address string) (*exec.Cmd, string, error) {
 		if err != nil {
 			break
 		}
-		cmd := exec.Command(edge, "--app="+address, "--user-data-dir="+profile, "--window-size=1140,800",
+		cmd := exec.Command(edge, "--app="+address, "--user-data-dir="+profile, "--window-size=720,500",
 			"--no-first-run", "--no-default-browser-check", "--disable-background-mode", "--disable-sync")
 		if err := cmd.Start(); err == nil {
 			return cmd, profile, nil

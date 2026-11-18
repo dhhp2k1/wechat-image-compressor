@@ -20,10 +20,10 @@ import (
 	"github.com/dhhp2k1/wechat-image-compressor/internal/update"
 )
 
-//go:embed ui/index.html ui/app.css ui/app.js
+//go:embed ui/index.html ui/app.css ui/app.js ui/logo.png
 var interfaceFiles embed.FS
 
-var version = "v2.0.0"
+var version = "v2.0.1"
 
 //go:embed update-key.pub
 var updatePublicKey string
@@ -51,7 +51,7 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Referrer-Policy", "no-referrer")
-	w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'self'; style-src 'self'; img-src blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
 	prefix := "/" + a.token + "/"
 	if r.Host != a.host || !strings.HasPrefix(r.URL.Path, prefix) {
 		http.NotFound(w, r)
@@ -92,6 +92,8 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		name, contentType = route, "text/css; charset=utf-8"
 	case "app.js":
 		name, contentType = route, "application/javascript; charset=utf-8"
+	case "logo.png":
+		name, contentType = route, "image/png"
 	default:
 		http.NotFound(w, r)
 		return

@@ -1,2 +1,5 @@
 ui/* text eol=lf
+ui/*.png binary
+*.ico binary
+*.syso binary
 update-key.pub text eol=lf

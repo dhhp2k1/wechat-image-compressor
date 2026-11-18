@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/sha256"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -152,6 +153,10 @@ func HTTPClient() *http.Client {
 	// HTTP/1.1 also works on networks that interrupt GitHub's HTTP/2 connections.
 	transport.Protocols = new(http.Protocols)
 	transport.Protocols.SetHTTP1(true)
+	transport.TLSClientConfig = &tls.Config{
+		MinVersion: tls.VersionTLS12,
+		NextProtos: []string{"http/1.1"},
+	}
 	return &http.Client{
 		Transport: transport,
 		Timeout:   90 * time.Second,

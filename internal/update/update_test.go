@@ -84,3 +84,25 @@ func TestMirrorFallbackAndVerification(t *testing.T) {
 		t.Fatal("accepted a corrupt download when no valid mirror was available")
 	}
 }
+
+func TestHTTPClientNegotiatesHTTP1(t *testing.T) {
+	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Test-Protocol", r.Proto)
+	}))
+	server.EnableHTTP2 = true
+	server.StartTLS()
+	defer server.Close()
+
+	client := HTTPClient()
+	defer client.CloseIdleConnections()
+	transport := client.Transport.(*http.Transport)
+	transport.TLSClientConfig.RootCAs = server.Client().Transport.(*http.Transport).TLSClientConfig.RootCAs
+	response, err := client.Get(server.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if got := response.Header.Get("X-Test-Protocol"); got != "HTTP/1.1" {
+		t.Fatalf("expected HTTP/1.1, got %s", got)
+	}
+}

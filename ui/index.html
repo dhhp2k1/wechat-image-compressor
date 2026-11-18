@@ -5,20 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <title>微信图片轻压缩</title>
+  <link rel="icon" href="logo.png" type="image/png">
   <link rel="stylesheet" href="app.css">
   <script src="app.js" defer></script>
 </head>
 <body>
   <header class="masthead">
     <div class="masthead-inner">
-      <h1><span class="app-icon" aria-hidden="true"></span>微信图片轻压缩</h1>
-      <div class="actions">
-        <button id="updates" class="button" type="button">检查更新</button>
-        <button id="quit" class="icon-button" type="button" title="退出" aria-label="退出" hidden>×</button>
-      </div>
+      <h1><img class="app-icon" src="logo.png" alt="" width="34" height="34">微信图片轻压缩</h1>
+      <details id="app-menu" class="app-menu">
+        <summary class="menu-trigger" title="更多" aria-label="更多">···</summary>
+        <div class="menu-items">
+          <button id="updates" class="menu-action" type="button">检查更新</button>
+          <button id="quit" class="menu-action" type="button" hidden>退出</button>
+        </div>
+      </details>
     </div>
   </header>
-  <main class="workspace">
+  <main id="workspace" class="workspace">
     <section class="input-panel" aria-label="添加图片">
       <button id="dropzone" class="dropzone" type="button">
         <span class="plus" aria-hidden="true"></span>
@@ -35,7 +39,7 @@
       </section>
       <p id="input-error" role="status" class="error" hidden></p>
     </section>
-    <section class="results" aria-labelledby="results-title">
+    <section id="results-panel" class="results" aria-labelledby="results-title" hidden>
       <div class="section-head results-head">
         <h2 id="results-title">压缩结果</h2>
         <button id="zip" class="button" type="button" hidden>保存 ZIP</button>

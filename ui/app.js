@@ -120,11 +120,18 @@ function addEntry(file) {
     URL.revokeObjectURL(entry.url);
     entries.splice(entries.indexOf(entry), 1);
     row.remove();
+    renderResultsPanel();
     updateZip();
   }, '移除 ' + file.name));
   row.append(img, info, actions);
   $('results').append(row);
   entries.push(entry);
+  renderResultsPanel();
+}
+
+function renderResultsPanel() {
+  $('results-panel').hidden = !entries.length;
+  $('workspace').classList.toggle('has-results', entries.length > 0);
 }
 
 function renderResult(entry) {
@@ -410,6 +417,7 @@ compare.addEventListener('close', () => {
 });
 
 const updateDialog = $('update-dialog');
+const appMenu = $('app-menu');
 let check;
 let available;
 let installing = false;
@@ -428,6 +436,7 @@ async function checkUpdate(show) {
   try {
     const result = await check;
     available = result.available;
+    appMenu.classList.toggle('has-update', Boolean(available));
     if (available) {
       $('updates').textContent = '更新 ' + available;
       if (show) {
@@ -443,8 +452,18 @@ async function checkUpdate(show) {
 }
 
 $('updates').addEventListener('click', () => {
+  appMenu.open = false;
   updateDialog.showModal();
   checkUpdate(true);
+});
+document.addEventListener('pointerdown', event => {
+  if (!appMenu.contains(event.target)) appMenu.open = false;
+});
+appMenu.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && appMenu.open) {
+    appMenu.open = false;
+    appMenu.querySelector('summary').focus();
+  }
 });
 $('update-retry').addEventListener('click', () => checkUpdate(true));
 $('install').addEventListener('click', async () => {
@@ -480,6 +499,7 @@ async function quit() {
 }
 
 $('quit').addEventListener('click', () => {
+  appMenu.open = false;
   if (entries.length || pending.length) $('exit-dialog').showModal();
   else quit();
 });

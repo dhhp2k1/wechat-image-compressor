@@ -29,24 +29,59 @@ ul { list-style: none; padding: 0; }
   justify-content: space-between;
   gap: 10px;
 }
-h1 { display: flex; align-items: center; gap: 11px; font-size: 20px; font-weight: 700; }
+h1 { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; }
 h2 { font-size: 16px; font-weight: 700; }
-.app-icon {
+.app-icon { display: block; flex: none; }
+.app-menu { position: relative; }
+.menu-trigger {
   position: relative;
-  display: inline-block;
-  flex: 0 0 32px;
-  height: 32px;
-  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  color: var(--muted);
+  font: 700 22px/1 "Segoe UI", sans-serif;
+  letter-spacing: 1px;
+  cursor: pointer;
+  user-select: none;
+}
+.menu-trigger::-webkit-details-marker { display: none; }
+.menu-trigger:hover, .app-menu[open] .menu-trigger { background: var(--soft); color: var(--green); }
+.has-update .menu-trigger::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
   background: var(--green);
 }
-.app-icon::before, .app-icon::after {
+.menu-items {
   position: absolute;
-  content: "";
-  border: 1.5px solid #fff;
-  border-radius: 3px;
+  z-index: 2;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 138px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 8px 24px #142c1f19;
 }
-.app-icon::before { inset: 7px 10px 10px 7px; opacity: .55; }
-.app-icon::after { inset: 12px 6px 6px 12px; background: var(--green); }
+.menu-action {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: #fff;
+  color: inherit;
+  text-align: left;
+  white-space: nowrap;
+}
+.menu-action:hover, .menu-action:focus-visible { background: var(--soft); color: var(--green); }
 .actions { display: flex; align-items: center; gap: 8px; }
 .button, .icon-button {
   min-height: 36px;
@@ -74,6 +109,11 @@ h2 { font-size: 16px; font-weight: 700; }
   max-width: 1360px;
   margin: auto;
   padding: 24px 28px;
+}
+.workspace:not(.has-results) {
+  grid-template-columns: minmax(0, 426px);
+  justify-content: center;
+  padding-top: clamp(26px, 8vh, 52px);
 }
 .input-panel, .results { border: 1px solid var(--line); border-radius: 13px; background: #fff; }
 .input-panel { padding: 16px; }
@@ -161,7 +201,6 @@ figcaption span + span { color: var(--muted); font-size: 12px; white-space: nowr
 @media (max-width: 620px) {
   h1 { font-size: 16px; gap: 7px; }
   .masthead-inner, .workspace { padding-left: 10px; padding-right: 10px; }
-  .masthead-inner > .actions { gap: 4px; }
   .workspace { grid-template-columns: minmax(0, 1fr); padding-top: 12px; }
   .dropzone { min-height: 105px; }
   .results-list { max-height: none; }
